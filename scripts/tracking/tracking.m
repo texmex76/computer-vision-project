@@ -1,6 +1,6 @@
-color_imgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\03\data\peaches\top\RGB");
-binary_imgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\project_dir\data\PixelLabelData_top");
-imds = imageDatastore(color_imgDir);
+colorImgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\03\data\peaches\top\RGB");
+binaryImgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\project_dir\data\PixelLabelData_top");
+imds = imageDatastore(colorImgDir);
 % Which image to read. We got a total of 19 images
 img_idx = 7;
 I = readimage(imds,img_idx);

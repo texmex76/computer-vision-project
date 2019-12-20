@@ -21,4 +21,5 @@ The "Ideas" list contains methods that nobody has looked at in detail yet. You c
 ## Contents (selection)
 
 - ```data\PixelLabelData_top```: The manually segmented top row of peaches
+- ```data\peaches_top_center_coords```: Manually placed center coordinates of top row peaches
 - ```scripts\segmentation\naive_color_filtering```: Use color thresholding to get the peaches

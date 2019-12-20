@@ -1,7 +1,7 @@
 imgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\03\data\peaches\top\RGB");
 imds = imageDatastore(imgDir);
 % Which image to read. We got a total of 19 images
-img_idx = 4
+img_idx = 7;
 I = readimage(imds,img_idx);
 I = imresize(I,0.1);
 I = im2double(I);
