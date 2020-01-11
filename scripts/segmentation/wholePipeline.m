@@ -1,6 +1,6 @@
 clear all; clc; close all;
 
-% --- hyperparameters ---
+% --- hyperparameters for the detection ---
 % colorfilter
 range = [360 30];
 % detection
@@ -10,10 +10,11 @@ lower_thres_eccentricity = 0.90;
 min_hight = 1000; % note: counting starts from top!
 max_hight = 3800;
 
-% further parameter: mask
-% currently mask_1 is working best: change morphological opening factor
+% Further parameter: mask
+% In this implementation, mask_1 is used
+% Currently mask_1 is working best: change morphological opening factor
 
-
+% --- hyperparameters for the tracking ---
 tracker = trackerGNN( ...
     'FilterInitializationFcn',@initcvekf,...
     'Assignment','Munkres',...
@@ -24,8 +25,11 @@ tracker = trackerGNN( ...
     'DeletionThreshold',-1,...
     'FalseAlarmRate',1e-8);
 
+% Matrix that we need to extract the positions of the tracks
 positionSelector = [1 0 0 0 0 0; 0 0 1 0 0 0; 0 0 0 0 1 0];
 
+% Setting up the plot. We're plotting three things: image, detected peaches
+% and tracks
 hfig = figure;
 hfig.Position = [614   50   631   529];
 hfig.Visible = 'on';
@@ -34,15 +38,17 @@ tp = theaterPlot('Parent',tpaxes,'XLimits',[0 6000], 'YLimits',[0 4000]);
 trackP = trackPlotter(tp,'DisplayName','Tracks','HistoryDepth',100,'ColorizeHistory','on','ConnectHistory','on');
     
 % --- load data ---
-% imgDir = fullfile("C:\Users\Sebastian Gapp\Google Drive\1.Semester\Computer Vision\Lab\3.meeting\data\peaches\top\RGB");
+% Specify image path here. We use the top row of the peaches
 imgDir = fullfile("C:\Users\User\Google Drive\JKU\WS19\Computer Vision\LAB\03\data\peaches\top\RGB");
 imds = imageDatastore(imgDir);
 
 hold on;
-% actually there's 19 pictures
+% For-loop over the images
+% Actually there's 19 pictures, however in the first and in the last two
+% there's no peaches on our tree visible so we'll omit those images
 for imgIdx=2:17
     I = readimage(imds,imgIdx);
-%     imgResized = imresize(I,0.01);
+    % Plotting the image
     imshow(I,'Parent',tpaxes);
 
     % -- apply hue colorfilter ---
@@ -67,27 +73,40 @@ for imgIdx=2:17
 
     [x,y] = our_detection(mask, lower_thres_area, upper_thres_area, lower_thres_eccentricity);
     
+    % Now that we have the points of our peaches, let's put them into our
+    % tracker. The tracker actually wants 3-dimensional points, so we'll
+    % just append a row of ones
     points = cat(2,[x y],ones(size([x y], 1),1));
+    % The tracker only takes special `objectDetection` objects. The content
+    % of those are the actual points and the time. For the time, we use the
+    % image index
+    % We also have to scale the point coordinates, otherwise the tracker
+    % won't work for some reason, so we just divide over 100
     detections = {};
     for i=1:size(points,1)
             detections{i} = objectDetection(imgIdx,points(i,:)/100);
     end
     
+    % Passing our detections and the time to the tracker which will update
     [tracks,tentativeTracks,allTracks,analysisInformation] = tracker(detections,imgIdx);
+    % As mentioned before, we need a special matrix to extract the tracked
+    % positions
     positions = getTrackPositions(tracks,positionSelector);
+    % Here we're looping over our detected points and plot them
     for i=1:size(detections,2)
+        % Since the points are scaled down here, we have to multiply them
+        % with 100 again
         x = detections{i}.Measurement(1)*100;
         y = detections{i}.Measurement(2)*100;
-%         if exist('plotPts','var') == 1
-%             delete(plotPts);
-%         end
         plotPts = plot(x, y,'r*','LineWidth',2,'MarkerSize',10);
         plotPts.Color = 'r';
     end
     
+    % Here we're plotting the tracks
     [pos,cov] = getTrackPositions(tracks,[1 0 0 0 0 0;0 0 1 0 0 0;0 0 0 0 1 0]);
     [vel,~] = getTrackVelocities(tracks,[0 1 0 0 0 0;0 0 0 1 0 0;0 0 0 0 0 1]);
     labels = arrayfun(@(x)num2str(x.TrackID),tracks,'UniformOutput',false);
+    % Multiplying by 100 since the points are actually scaled down
     trackP.plotTrack(pos*100,vel*100,cov*100,labels);
     drawnow
 end
